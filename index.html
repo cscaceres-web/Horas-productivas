@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Horas Productivas - Dashboard Móvil</title>
+  
+  <!-- Estilos del Dashboard -->
+  <link rel="stylesheet" href="style.css">
+  
+  <!-- Librerías locales descargadas para funcionamiento offline -->
+  <script src="libs/xlsx.full.min.js"></script>
+  <script src="libs/chart.umd.js"></script>
+</head>
+<body>
+
+  <!-- Background Orbs -->
+  <div class="bg-orbs">
+    <div class="orb-1"></div>
+    <div class="orb-2"></div>
+  </div>
+
+  <div class="app-container">
+    
+    <!-- Header -->
+    <header>
+      <div class="logo-container">
+        <img src="logo.png" alt="Logo Horas Productivas" class="app-logo">
+      </div>
+      <h1>Horas Productivas</h1>
+      <p id="app-status">Cargando base de datos...</p>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <div class="tabs">
+      <div class="tab active" id="tab-calculator" onclick="switchTab('calculator')">INFORMACION</div>
+      <div class="tab" id="tab-sales-average" onclick="switchTab('sales-average')">PROMEDIO VENTAS</div>
+      <div class="tab" id="tab-sync" onclick="switchTab('sync')">Sincronización</div>
+    </div>
+
+    <!-- MAIN CALCULATOR CONTENT -->
+    <div id="content-calculator">
+      
+      <!-- Selectors Card -->
+      <div class="card">
+        <div class="card-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
+          Seleccionar Punto de Venta
+        </div>
+        
+        <div class="form-group">
+          <label for="select-cadena">Cadena</label>
+          <select id="select-cadena" onchange="onCadenaChange()">
+            <!-- Dinámico -->
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="select-pdv">Restaurante / PDV</label>
+          <select id="select-pdv" onchange="onPdvChange()">
+            <!-- Dinámico -->
+          </select>
+        </div>
+      </div>
+
+      <!-- Variables / Inputs Card -->
+      <div class="card">
+        <div class="card-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+          Variables de Simulación
+        </div>
+        
+        <!-- Anfitriones Slider with controls -->
+        <div class="slider-container" style="margin-bottom: 0;">
+          <div class="slider-header">
+            <label>Anfitriones para Evaluar</label>
+            <div class="day-controls">
+              <button class="day-btn" onclick="adjustAnfitriones(-1)">-</button>
+              <span class="slider-val" id="val-anfitriones">2</span>
+              <button class="day-btn" onclick="adjustAnfitriones(1)">+</button>
+            </div>
+          </div>
+          <input type="range" id="input-anfitriones" min="1" max="15" step="1" value="2" oninput="updateAnfitriones(this.value)">
+        </div>
+      </div>
+
+      <!-- Service Hours Card -->
+      <div class="card">
+        <div class="card-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+          Horas de Servicio Diarias
+        </div>
+
+        <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
+          <span style="font-size:12px; color:var(--text-secondary);">Ajuste rápido:</span>
+          <div>
+            <button class="day-btn" style="width:50px; font-size:11px; display:inline-flex;" onclick="setAllHours(14)">14h</button>
+            <button class="day-btn" style="width:50px; font-size:11px; display:inline-flex;" onclick="setAllHours(12)">12h</button>
+            <button class="day-btn" style="width:50px; font-size:11px; display:inline-flex;" onclick="setAllHours(8)">8h</button>
+          </div>
+        </div>
+
+        <div class="weekdays-grid">
+          <div class="day-input-group">
+            <span class="day-name">Lunes</span>
+            <div class="day-controls">
+              <button class="day-btn" onclick="adjustDayHour('Lunes', -0.5)">-</button>
+              <span class="day-val" id="val-Lunes">14.0</span>
+              <button class="day-btn" onclick="adjustDayHour('Lunes', 0.5)">+</button>
+            </div>
+          </div>
+          <div class="day-input-group">
+            <span class="day-name">Martes</span>
+            <div class="day-controls">
+              <button class="day-btn" onclick="adjustDayHour('Martes', -0.5)">-</button>
+              <span class="day-val" id="val-Martes">14.0</span>
+              <button class="day-btn" onclick="adjustDayHour('Martes', 0.5)">+</button>
+            </div>
+          </div>
+          <div class="day-input-group">
+            <span class="day-name">Miércoles</span>
+            <div class="day-controls">
+              <button class="day-btn" onclick="adjustDayHour('Miércoles', -0.5)">-</button>
+              <span class="day-val" id="val-Miércoles">14.0</span>
+              <button class="day-btn" onclick="adjustDayHour('Miércoles', 0.5)">+</button>
+            </div>
+          </div>
+          <div class="day-input-group">
+            <span class="day-name">Jueves</span>
+            <div class="day-controls">
+              <button class="day-btn" onclick="adjustDayHour('Jueves', -0.5)">-</button>
+              <span class="day-val" id="val-Jueves">14.0</span>
+              <button class="day-btn" onclick="adjustDayHour('Jueves', 0.5)">+</button>
+            </div>
+          </div>
+          <div class="day-input-group">
+            <span class="day-name">Viernes</span>
+            <div class="day-controls">
+              <button class="day-btn" onclick="adjustDayHour('Viernes', -0.5)">-</button>
+              <span class="day-val" id="val-Viernes">14.0</span>
+              <button class="day-btn" onclick="adjustDayHour('Viernes', 0.5)">+</button>
+            </div>
+          </div>
+          <div class="day-input-group">
+            <span class="day-name">Sábado</span>
+            <div class="day-controls">
+              <button class="day-btn" onclick="adjustDayHour('Sábado', -0.5)">-</button>
+              <span class="day-val" id="val-Sábado">14.0</span>
+              <button class="day-btn" onclick="adjustDayHour('Sábado', 0.5)">+</button>
+            </div>
+          </div>
+          <div class="day-input-group" style="grid-column: span 2;">
+            <span class="day-name">Domingo</span>
+            <div class="day-controls">
+              <button class="day-btn" onclick="adjustDayHour('Domingo', -0.5)">-</button>
+              <span class="day-val" id="val-Domingo">14.0</span>
+              <button class="day-btn" onclick="adjustDayHour('Domingo', 0.5)">+</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Result Cards -->
+      <div class="metrics-grid">
+        <div class="metric-card wide">
+          <span class="metric-label">Venta Requerida por Hora</span>
+          <span class="metric-val cyan" id="result-venta-hora">$ 0</span>
+          <span class="metric-desc">Venta mínima necesaria para ser productivo</span>
+        </div>
+
+        <div class="metric-card">
+          <span class="metric-label">Transacciones / Hora</span>
+          <span class="metric-val" id="result-transacciones-hora" style="color: var(--accent-cyan);">0.0</span>
+          <span class="metric-desc">Volumen requerido por hora</span>
+        </div>
+
+        <div class="metric-card">
+          <span class="metric-label">Costo Total / Hora</span>
+          <span class="metric-val" id="result-total-costo-hora" style="color: var(--accent-blue);">$ 0</span>
+          <span class="metric-desc">Costo personal + servicios por hora</span>
+        </div>
+
+        <div class="metric-card">
+          <span class="metric-label">Costo Personal / Hora</span>
+          <span class="metric-val" id="result-gasto-personal-hora" style="color: var(--warning);">$ 0</span>
+          <span class="metric-desc">Gasto de personal estimado por hora</span>
+        </div>
+
+        <div class="metric-card">
+          <span class="metric-label">Costo Servicios / Hora</span>
+          <span class="metric-val" id="result-servicios-hora" style="color: var(--warning);">$ 0</span>
+          <span class="metric-desc">Gasto de servicios estimado por hora</span>
+        </div>
+
+        <div class="metric-card wide">
+          <span class="metric-label">Total Horas Mes</span>
+          <span class="metric-val" id="result-horas-mes">0.0 hrs</span>
+          <span class="metric-desc">Horas totales proyectadas</span>
+        </div>
+      </div>
+
+
+
+      <!-- PDV Original Data Summary Card -->
+      <div class="card">
+        <div class="card-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+          Resumen PDV Actual (Mes Completo)
+        </div>
+        <div style="font-size: 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+          <div><span style="color: var(--text-secondary);">Venta Total:</span></div>
+          <div style="text-align: right;"><strong id="info-venta">$ 0</strong></div>
+          
+          <div><span style="color: var(--text-secondary);">Gasto Personal:</span></div>
+          <div style="text-align: right;"><strong id="info-gasto-personal">$ 0</strong></div>
+          
+          <div><span style="color: var(--text-secondary);">Planta de Anfitriones:</span></div>
+          <div style="text-align: right;"><strong id="info-planta">0</strong></div>
+
+          <div><span style="color: var(--text-secondary);">Ticket Promedio:</span></div>
+          <div style="text-align: right;"><strong id="info-ticket">$ 0</strong></div>
+
+          <div><span style="color: var(--text-secondary);">Gasto de Servicios:</span></div>
+          <div style="text-align: right;"><strong id="info-servicios">$ 0</strong></div>
+
+          <div><span style="color: var(--text-secondary);">Utilidad Neta Objetivo:</span></div>
+          <div style="text-align: right;"><strong id="info-utilidad-neta">0.0%</strong></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SALES AVERAGE CONTENT -->
+    <div id="content-sales-average" style="display: none;">
+      
+      <!-- Selectors Card -->
+      <div class="card">
+        <div class="card-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
+          Seleccionar Punto de Venta
+        </div>
+        
+        <div class="form-group">
+          <label for="select-cadena-sales">Cadena</label>
+          <select id="select-cadena-sales" onchange="onCadenaSalesChange()">
+            <!-- Dinámico -->
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="select-pdv-sales">Restaurante / PDV</label>
+          <select id="select-pdv-sales" onchange="onPdvSalesChange()">
+            <!-- Dinámico -->
+          </select>
+        </div>
+      </div>
+
+      <!-- Calendar Select Card -->
+      <div class="card" id="calendar-card">
+        <div class="card-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+          <span id="calendar-card-title">Seleccionar Días</span>
+        </div>
+        
+        <!-- Quick selectors -->
+        <div class="quick-selectors">
+          <button class="preset-btn" onclick="selectDaysPreset('all')">Todos</button>
+          <button class="preset-btn" onclick="selectDaysPreset('weekdays')">Semana</button>
+          <button class="preset-btn" onclick="selectDaysPreset('weekends')">Findes</button>
+          <button class="preset-btn" onclick="selectDaysPreset('none')">Limpiar</button>
+        </div>
+
+        <!-- Calendar grid -->
+        <div class="calendar-grid-container">
+          <div class="calendar-header-days">
+            <span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span><span>Dom</span>
+          </div>
+          <div class="calendar-days-grid" id="calendar-days-grid">
+            <!-- Dinámico 1-30 -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Hour Select Card -->
+      <div class="card" id="hour-card">
+        <div class="card-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          Seleccionar Horas
+        </div>
+
+        <!-- Multiselect Dropdown -->
+        <div class="multiselect-container">
+          <div class="multiselect-trigger" id="hours-dropdown-trigger" onclick="toggleHoursDropdown(event)">
+            <span id="hours-dropdown-value">Seleccionar horas...</span>
+            <svg class="dropdown-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
+          <div class="multiselect-dropdown" id="hours-dropdown-options">
+            <!-- Dinámico -->
+          </div>
+        </div>
+      </div>
+
+
+      <!-- Result Card for Sales Average -->
+      <div class="card" id="sales-average-results-card">
+        <div class="card-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+          Promedio de Venta
+        </div>
+
+        <div class="metrics-grid">
+          <div class="metric-card wide">
+            <span class="metric-label">Promedio de Venta Diario</span>
+            <span class="metric-val cyan" id="avg-result-venta-diaria">$ 0</span>
+            <span class="metric-desc">Venta total dividida entre días seleccionados</span>
+          </div>
+
+          <div class="metric-card">
+            <span class="metric-label">Venta Total</span>
+            <span class="metric-val" id="avg-result-venta-total" style="color: var(--accent-cyan);">$ 0</span>
+            <span class="metric-desc">Acumulada en días seleccionados</span>
+          </div>
+
+          <div class="metric-card">
+            <span class="metric-label">Días Seleccionados</span>
+            <span class="metric-val" id="avg-result-dias-seleccionados" style="color: var(--warning);">0</span>
+            <span class="metric-desc">Días incluidos en el promedio</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" id="sales-average-no-data-card" style="display: none; text-align: center; padding: 30px 20px;">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2" style="margin-bottom: 12px; display: inline-block;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+        <h3 style="margin-bottom: 8px; font-weight: 600; color: var(--text-primary);">No hay datos de ventas diarias</h3>
+        <p style="font-size: 14px; color: var(--text-secondary);">Este punto de venta no tiene registros detallados en la pestaña "Hoja3" de la base de datos.</p>
+      </div>
+
+    </div>
+
+    <!-- SYNCHRONIZATION AND FILES CONTENT -->
+    <div id="content-sync" style="display: none;">
+      
+      <!-- Connect Google Drive -->
+      <div class="card">
+        <div class="card-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33z"></path><polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"></polygon></svg>
+          Sincronizar con Google Sheets
+        </div>
+        
+        <div class="alert alert-info">
+          <div>
+            <strong>¡Conexión en vivo!</strong> Puedes publicar tu hoja de Google Sheets para que la app se actualice sola en el celular.
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="sheets-url">Enlace CSV de Google Sheets publicado</label>
+          <input type="url" id="sheets-url" placeholder="https://docs.google.com/spreadsheets/.../pub?output=csv">
+        </div>
+
+        <button class="btn" onclick="saveAndFetchSheetsUrl()">Sincronizar y Guardar</button>
+        
+        <div style="margin-top: 15px; font-size: 13px; color: var(--text-secondary);">
+          <p style="margin-bottom: 6px; font-weight: 600;">¿Cómo obtener este enlace?</p>
+          <ol style="margin-left: 20px; display: flex; flex-direction: column; gap: 4px;">
+            <li>Abre tu hoja en Google Sheets.</li>
+            <li>Ve a <strong>Archivo</strong> > <strong>Compartir</strong> > <strong>Publicar en la web</strong>.</li>
+            <li>Selecciona la pestaña <strong>Hoja2</strong> y cambia "Página web" por <strong>Valores separados por comas (.csv)</strong>.</li>
+            <li>Haz clic en <strong>Publicar</strong> y copia el enlace generado.</li>
+          </ol>
+        </div>
+      </div>
+
+      <!-- Local File Upload Card -->
+      <div class="card">
+        <div class="card-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+          Cargar Archivo Excel Local (.xlsx)
+        </div>
+        
+        <div class="upload-area" id="drop-area" onclick="triggerFileSelect()">
+          <div class="upload-icon">📁</div>
+          <div class="upload-text">
+            Arrastra tu archivo Excel aquí o <span>selecciónalo</span>
+          </div>
+          <input type="file" id="fileInput" accept=".xlsx, .xls, .csv" onchange="handleFileSelect(event)">
+        </div>
+        
+        <div id="file-info" style="margin-top:12px; font-size:13px; color:var(--text-secondary); text-align:center; display:none;">
+          Archivo cargado: <strong id="file-name" style="color:var(--accent-cyan)">Ninguno</strong>
+        </div>
+
+        <button class="btn btn-secondary" onclick="loadDefaultConfigData()">Restaurar Datos Originales</button>
+      </div>
+      
+    </div>
+
+  </div>
+
+  <!-- Lógica de la aplicación -->
+  <script src="app.js"></script>
+</body>
+</html>
